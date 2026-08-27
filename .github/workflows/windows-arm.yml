@@ -72,19 +72,14 @@ jobs:
         run: |
           choco install wixtoolset --version=3.14.1 --allow-downgrade --yes --no-progress --limit-output
           if ($LASTEXITCODE -ne 0) { throw "Chocolatey exited with $LASTEXITCODE" }
-          $root = Join-Path $env:ChocolateyInstall 'lib\wixtoolset\tools'
-          $dirs = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter candle.exe |
-            ForEach-Object { $_.Directory } |
-            Where-Object {
-              (Test-Path (Join-Path $_ 'light.exe')) -and
-              (Test-Path (Join-Path $_ 'heat.exe'))
-            } | Sort-Object FullName -Unique)
-          if ($dirs.Count -ne 1) { throw "Expected one WiX bin directory, found $($dirs.Count)." }
+          $wix = Join-Path ${env:ProgramFiles(x86)} 'WiX Toolset v3.14\bin'
+          if (-not (Test-Path -LiteralPath $wix -PathType Container)) {
+            throw "Expected WiX bin directory at $wix."
+          }
           [xml] $nuspec = Get-Content -LiteralPath (Join-Path $env:ChocolateyInstall 'lib\wixtoolset\wixtoolset.nuspec')
           if ([string] $nuspec.package.metadata.version -ne '3.14.1') {
             throw "Expected WiX package 3.14.1, found $($nuspec.package.metadata.version)."
           }
-          $wix = $dirs[0].FullName
           foreach ($tool in 'candle.exe', 'light.exe', 'heat.exe') {
             $path = Join-Path $wix $tool
             $stream = [IO.File]::OpenRead($path)
@@ -178,19 +173,14 @@ jobs:
         run: |
           choco install wixtoolset --version=3.14.1 --allow-downgrade --yes --no-progress --limit-output
           if ($LASTEXITCODE -ne 0) { throw "Chocolatey exited with $LASTEXITCODE" }
-          $root = Join-Path $env:ChocolateyInstall 'lib\wixtoolset\tools'
-          $dirs = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter candle.exe |
-            ForEach-Object { $_.Directory } |
-            Where-Object {
-              (Test-Path (Join-Path $_ 'light.exe')) -and
-              (Test-Path (Join-Path $_ 'heat.exe'))
-            } | Sort-Object FullName -Unique)
-          if ($dirs.Count -ne 1) { throw "Expected one WiX bin directory, found $($dirs.Count)." }
+          $wix = Join-Path ${env:ProgramFiles(x86)} 'WiX Toolset v3.14\bin'
+          if (-not (Test-Path -LiteralPath $wix -PathType Container)) {
+            throw "Expected WiX bin directory at $wix."
+          }
           [xml] $nuspec = Get-Content -LiteralPath (Join-Path $env:ChocolateyInstall 'lib\wixtoolset\wixtoolset.nuspec')
           if ([string] $nuspec.package.metadata.version -ne '3.14.1') {
             throw "Expected WiX package 3.14.1, found $($nuspec.package.metadata.version)."
           }
-          $wix = $dirs[0].FullName
           foreach ($tool in 'candle.exe', 'light.exe', 'heat.exe') {
             $path = Join-Path $wix $tool
             $stream = [IO.File]::OpenRead($path)
