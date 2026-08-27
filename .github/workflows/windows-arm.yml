@@ -6,6 +6,16 @@ name: "Windows Arm64"
 # used for x64 releases (ZIP + WIX), and executes tests on the installed
 # build rather than only compiling it. Signing/publication remain out of
 # scope (maintainer-owned).
+#
+# The KeePassXC application payload (EXE/DLLs) is native Arm64. WiX v3's
+# candle.exe/light.exe/heat.exe are x86 (PE machine 0x014C) and therefore run
+# under Windows x86 emulation on this runner; that is an accepted WiX v3
+# tooling limitation, not an application-payload defect.
+#
+# This job runs on the current windows-11-arm hosted image. The planned
+# September 2026 VS2026 hosted-runner image migration is an unvalidated gate:
+# this workflow does not pin an image version and does not assume the
+# migrated image will pass unchanged.
 
 on:
   push:
@@ -62,7 +72,7 @@ jobs:
             if (-not $cmd) { throw "Required tool not found on PATH: $tool" }
             Write-Host "$tool -> $($cmd.Source)"
           }
-          Write-Host "VCPKG_ROOT=$env:VCPKG_ROOT"
+          Write-Host "VCPKG_INSTALLATION_ROOT=$env:VCPKG_INSTALLATION_ROOT"
         shell: pwsh
 
       - name: Build, package (ZIP + WIX), and test on native Arm64
