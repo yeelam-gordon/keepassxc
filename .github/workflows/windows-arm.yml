@@ -58,10 +58,37 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install WiX Toolset (candle/light/heat) and GnuPG
+      - name: Install WiX Toolset (candle/light/heat)
+        run: choco install wixtoolset -y --no-progress
+        shell: pwsh
+
+      - name: Resolve Git-bundled gpg.exe onto PATH
         # GnuPG isn't used for this unsigned CI proof build, but release-tool.py's
         # basic checks unconditionally require `gpg` on PATH regardless of platform.
-        run: choco install wixtoolset gnupg -y --no-progress
+        # Chocolatey's gnupg package hangs on this runner (F-ARM-1), so reuse the
+        # gpg.exe already bundled with the runner's preinstalled Git for Windows
+        # instead of installing a separate GnuPG package.
+        run: |
+          $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+          if (-not $gitCmd) { throw "git not found on PATH; cannot locate bundled gpg.exe" }
+
+          $gitDir = Split-Path -Parent $gitCmd.Source
+          # Git for Windows ships gpg.exe under <git-root>\usr\bin relative to cmd\git.exe.
+          $gpgDir = Join-Path (Split-Path -Parent $gitDir) 'usr\bin'
+          $gpgPath = Join-Path $gpgDir 'gpg.exe'
+
+          if (-not (Test-Path $gpgPath)) {
+            throw "Expected Git-bundled gpg.exe not found at $gpgPath"
+          }
+
+          Write-Host "Found Git-bundled gpg.exe at $gpgPath"
+
+          # Add to the current step's PATH so gpg is usable immediately if needed,
+          # and to $GITHUB_PATH so it persists on PATH for all subsequent steps.
+          $env:PATH = "$gpgDir;$env:PATH"
+          Add-Content -Path $env:GITHUB_PATH -Value $gpgDir
+
+          & gpg.exe --version | Select-Object -First 1
         shell: pwsh
 
       - name: Confirm required tools are on PATH
