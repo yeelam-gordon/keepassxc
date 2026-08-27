@@ -1,0 +1,96 @@
+name: "Windows Arm64"
+
+# Native Windows on Arm build/package/test proof lane. Runs on GitHub-hosted
+# windows-11-arm runners (GA, free for public repos) with a native Arm64
+# vcpkg dependency closure, packaged through the same release-tool.py path
+# used for x64 releases (ZIP + WIX), and executes tests on the installed
+# build rather than only compiling it. Signing/publication remain out of
+# scope (maintainer-owned).
+
+on:
+  push:
+    branches:
+      - 'develop'
+      - 'release/**'
+    paths:
+      - '.github/workflows/windows-arm.yml'
+      - 'vcpkg.json'
+      - 'vcpkg-configuration.json'
+      - 'vcpkg/**'
+      - 'release-tool.py'
+      - 'CMakeLists.txt'
+      - 'src/**'
+      - 'tests/**'
+  pull_request:
+    paths:
+      - '.github/workflows/windows-arm.yml'
+      - 'vcpkg.json'
+      - 'vcpkg-configuration.json'
+      - 'vcpkg/**'
+      - 'release-tool.py'
+      - 'CMakeLists.txt'
+      - 'src/**'
+      - 'tests/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build, package, and test (arm64-windows)
+    runs-on: windows-11-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install WiX Toolset (candle/light/heat) and GnuPG
+        # GnuPG isn't used for this unsigned CI proof build, but release-tool.py's
+        # basic checks unconditionally require `gpg` on PATH regardless of platform.
+        run: choco install wixtoolset gnupg -y --no-progress
+        shell: pwsh
+
+      - name: Confirm required tools are on PATH
+        run: |
+          $tools = 'cmake', 'ctest', 'cpack', 'candle', 'light', 'heat', 'gpg'
+          foreach ($tool in $tools) {
+            $cmd = Get-Command $tool -ErrorAction SilentlyContinue
+            if (-not $cmd) { throw "Required tool not found on PATH: $tool" }
+            Write-Host "$tool -> $($cmd.Source)"
+          }
+          Write-Host "VCPKG_ROOT=$env:VCPKG_ROOT"
+        shell: pwsh
+
+      - name: Build, package (ZIP + WIX), and test on native Arm64
+        run: >
+          python release-tool.py build 0.0.0
+          --src-dir .
+          --output-dir release
+          --platform-target arm64
+          --with-tests
+          --yes
+          --snapshot
+        shell: pwsh
+
+      - name: Verify packaged artifacts are Arm64-only
+        run: |
+          $artifacts = Get-ChildItem -Path release -Include *.zip, *.msi -Recurse
+          if (-not $artifacts) { throw 'No release artifacts were produced.' }
+          foreach ($artifact in $artifacts) {
+            Write-Host "Found artifact: $($artifact.Name)"
+            if ($artifact.Name -notmatch 'arm64') {
+              throw "Artifact name does not indicate an Arm64 build: $($artifact.Name)"
+            }
+          }
+        shell: pwsh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: keepassxc-windows-arm64-snapshot
+          path: release/*
+          retention-days: 14

@@ -759,6 +759,14 @@ class Build(Command):
         # Use vcpkg for dependency deployment
         cmake_opts.append('-DX_VCPKG_APPLOCAL_DEPS_INSTALL=ON')
 
+        if not mingw:
+            # Explicitly select the vcpkg triplet matching --platform-target. Without this,
+            # vcpkg's toolchain infers the triplet from the host architecture, which is wrong
+            # when cross-compiling (and fragile even when building natively). This mirrors the
+            # explicit triplet selection already done in build_macos().
+            vcpkg_triplet = {'amd64': 'x64-windows', 'arm64': 'arm64-windows'}[platform_target]
+            cmake_opts.append(f'-DVCPKG_TARGET_TRIPLET={vcpkg_triplet}')
+
         if mingw:
             vs_env = os.environ.copy()
         else:
