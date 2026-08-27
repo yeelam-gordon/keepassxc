@@ -475,7 +475,8 @@ install(TARGETS ${PROGNAME}
 if(WIN32)
     # Deploy used libraries into build directory for debugging
     add_custom_command(TARGET ${PROGNAME} POST_BUILD
-        COMMAND ${WINDEPLOYQT_EXE}
+        COMMAND ${DEPLOYQT_EXE}
+            ${DEPLOYQT_ARGS}
             --dir $<TARGET_FILE_DIR:${PROGNAME}>
             $<IF:$<CONFIG:Debug>,--debug,--release>
             $<TARGET_FILE:${PROGNAME}>)
@@ -531,6 +532,25 @@ if(WIN32)
             "${CMAKE_SOURCE_DIR}/share/windows/KPXC_ExitDlg.wxs")
     set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT  "https://keepassxc.org")
     set(CPACK_WIX_EXTENSIONS "WixUtilExtension.dll")
+
+    string(TOLOWER "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" _windows_package_arch)
+    if(NOT _windows_package_arch)
+        string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _windows_package_arch)
+    endif()
+    if(_windows_package_arch MATCHES "^(amd64|x64|x86_64)$")
+        set(CPACK_WIX_ARCHITECTURE x64)
+    elseif(_windows_package_arch MATCHES "^(arm64|aarch64)$")
+        if(CMAKE_VERSION VERSION_LESS "3.24")
+            message(FATAL_ERROR
+                    "Arm64 WiX packages require CMake/CPack 3.24 or later; found ${CMAKE_VERSION}")
+        endif()
+        set(CPACK_WIX_ARCHITECTURE arm64)
+    else()
+        message(FATAL_ERROR
+                "Unsupported Windows release architecture: "
+                "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} (${CMAKE_SYSTEM_PROCESSOR})")
+    endif()
+
     include(CPack)
 
     
@@ -542,7 +562,7 @@ if(WIN32)
             set(_wdqt_mode --release)
         endif()
         execute_process(
-            COMMAND ${WINDEPLOYQT_EXE} ${PROGNAME}.exe \${_wdqt_mode}
+            COMMAND ${DEPLOYQT_EXE} ${DEPLOYQT_ARGS} ${PROGNAME}.exe \${_wdqt_mode}
             WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
             OUTPUT_QUIET
             RESULT_VARIABLE _wdqt_result
