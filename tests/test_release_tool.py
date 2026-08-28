@@ -152,6 +152,14 @@ class TestQtManifest(unittest.TestCase):
         self.assertIn('--dir \\"\\${CMAKE_INSTALL_PREFIX}\\"', cmake)
         self.assertIn('\\"\\${CMAKE_INSTALL_PREFIX}/${PROGNAME}.exe\\"', cmake)
 
+    def test_gui_target_avoids_duplicate_app_local_deployment(self):
+        cmake = (ROOT / 'src' / 'CMakeLists.txt').read_text(encoding='utf-8')
+        disable = cmake.index('set(VCPKG_APPLOCAL_DEPS OFF)')
+        executable = cmake.index('add_executable(${PROGNAME} main.cpp)')
+        restore = cmake.index('set(VCPKG_APPLOCAL_DEPS ON)', executable)
+        self.assertLess(disable, executable)
+        self.assertLess(executable, restore)
+
     def test_deployqt_x64_host_arm64_target(self):
         subprocess.run([
             find_cmake(),

@@ -403,7 +403,19 @@ if(WIN32)
 endif()
 
 # Main Executable Definition
+unset(_restore_vcpkg_applocal_deps)
+if(WIN32 AND WITH_BUILD_QT AND VCPKG_APPLOCAL_DEPS)
+    # windeployqt handles the GUI target's build-tree dependencies and plugins.
+    # Running vcpkg app-local first makes windeployqt load and then replace the
+    # same DLLs, which fails with sharing violations on Windows.
+    set(VCPKG_APPLOCAL_DEPS OFF)
+    set(_restore_vcpkg_applocal_deps ON)
+endif()
 add_executable(${PROGNAME} main.cpp)
+if(_restore_vcpkg_applocal_deps)
+    set(VCPKG_APPLOCAL_DEPS ON)
+    unset(_restore_vcpkg_applocal_deps)
+endif()
 target_link_libraries(${PROGNAME} keepassxc_gui)
 set_target_properties(${PROGNAME} PROPERTIES ENABLE_EXPORTS ON)
 
