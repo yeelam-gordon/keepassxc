@@ -1,6 +1,27 @@
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/KPXCDeployQt.cmake")
 
-if(TEST_CASE STREQUAL "windows-x64-to-arm64")
+if(TEST_CASE STREQUAL "windows-native-x64")
+    kpxc_resolve_vcpkg_deployqt(
+            HOST_SYSTEM_NAME Windows
+            HOST_SYSTEM_PROCESSOR AMD64
+            VCPKG_INSTALLED_DIR C:/vcpkg_installed
+            VCPKG_TARGET_TRIPLET x64-windows-release
+            TARGET_QT_PREFIX C:/vcpkg_installed/x64-windows-release
+            DEPLOYQT_EXE_NAME windeployqt.exe
+            OUT_EXECUTABLE executable
+            OUT_ARGUMENTS arguments
+            OUT_HOST_TRIPLET host_triplet)
+    if(NOT host_triplet STREQUAL "x64-windows")
+        message(FATAL_ERROR "Expected x64-windows host triplet, found ${host_triplet}")
+    endif()
+    if(NOT executable STREQUAL
+            "C:/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe")
+        message(FATAL_ERROR "Unexpected host deployment tool: ${executable}")
+    endif()
+    if(arguments)
+        message(FATAL_ERROR "Native deployment must not override qtpaths: ${arguments}")
+    endif()
+elseif(TEST_CASE STREQUAL "windows-x64-to-arm64")
     kpxc_resolve_vcpkg_deployqt(
             HOST_SYSTEM_NAME Windows
             HOST_SYSTEM_PROCESSOR AMD64

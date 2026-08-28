@@ -152,6 +152,14 @@ class TestQtManifest(unittest.TestCase):
             str(ROOT / 'tests' / 'cmake' / 'test_deployqt_resolution.cmake'),
         ], check=True, cwd=ROOT)
 
+    def test_deployqt_native_windows_target(self):
+        subprocess.run([
+            find_cmake(),
+            '-DTEST_CASE=windows-native-x64',
+            '-P',
+            str(ROOT / 'tests' / 'cmake' / 'test_deployqt_resolution.cmake'),
+        ], check=True, cwd=ROOT)
+
     def test_deployqt_macos_cross_target(self):
         subprocess.run([
             find_cmake(),

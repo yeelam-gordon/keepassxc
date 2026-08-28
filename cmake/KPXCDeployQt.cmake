@@ -62,27 +62,33 @@ function(kpxc_resolve_vcpkg_deployqt)
     endif()
 
     if(ARG_HOST_SYSTEM_NAME STREQUAL "Windows")
-        set(target_tools_dir
-                "${ARG_VCPKG_INSTALLED_DIR}/${ARG_VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
-        set(qtpaths_candidates
-                "${target_tools_dir}/qtpaths.bat"
-                "${target_tools_dir}/qtpaths6.bat")
-        list(GET qtpaths_candidates 0 target_qtpaths)
-        if(ARG_REQUIRE_EXISTS)
-            unset(target_qtpaths)
-            foreach(candidate IN LISTS qtpaths_candidates)
-                if(EXISTS "${candidate}")
-                    set(target_qtpaths "${candidate}")
-                    break()
+        string(REGEX REPLACE "-release$" "" normalized_target_triplet
+                "${ARG_VCPKG_TARGET_TRIPLET}")
+        if(host_triplet STREQUAL normalized_target_triplet)
+            set(deployqt_arguments)
+        else()
+            set(target_tools_dir
+                    "${ARG_VCPKG_INSTALLED_DIR}/${ARG_VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
+            set(qtpaths_candidates
+                    "${target_tools_dir}/qtpaths.bat"
+                    "${target_tools_dir}/qtpaths6.bat")
+            list(GET qtpaths_candidates 0 target_qtpaths)
+            if(ARG_REQUIRE_EXISTS)
+                unset(target_qtpaths)
+                foreach(candidate IN LISTS qtpaths_candidates)
+                    if(EXISTS "${candidate}")
+                        set(target_qtpaths "${candidate}")
+                        break()
+                    endif()
+                endforeach()
+                if(NOT target_qtpaths)
+                    message(FATAL_ERROR
+                            "No target qtpaths wrapper was found for triplet "
+                            "${ARG_VCPKG_TARGET_TRIPLET} under ${target_tools_dir}")
                 endif()
-            endforeach()
-            if(NOT target_qtpaths)
-                message(FATAL_ERROR
-                        "No target qtpaths wrapper was found for triplet "
-                        "${ARG_VCPKG_TARGET_TRIPLET} under ${target_tools_dir}")
             endif()
+            set(deployqt_arguments --qtpaths "${target_qtpaths}")
         endif()
-        set(deployqt_arguments --qtpaths "${target_qtpaths}")
     elseif(ARG_HOST_SYSTEM_NAME STREQUAL "Darwin")
         set(deployqt_arguments "-libpath=${ARG_TARGET_QT_PREFIX}/lib")
     else()
