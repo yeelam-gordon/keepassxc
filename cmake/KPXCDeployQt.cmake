@@ -65,7 +65,36 @@ function(kpxc_resolve_vcpkg_deployqt)
         string(REGEX REPLACE "-release$" "" normalized_target_triplet
                 "${ARG_VCPKG_TARGET_TRIPLET}")
         if(host_triplet STREQUAL normalized_target_triplet)
-            set(deployqt_arguments)
+            set(host_qtpaths_candidates
+                    "${host_tools_dir}/qtpaths.exe"
+                    "${host_tools_dir}/qtpaths6.exe")
+            list(GET host_qtpaths_candidates 0 host_qtpaths)
+            if(ARG_REQUIRE_EXISTS)
+                unset(host_qtpaths)
+                foreach(candidate IN LISTS host_qtpaths_candidates)
+                    if(EXISTS "${candidate}")
+                        set(host_qtpaths "${candidate}")
+                        break()
+                    endif()
+                endforeach()
+                if(NOT host_qtpaths)
+                    message(FATAL_ERROR
+                            "No host qtpaths executable was found for triplet "
+                            "${host_triplet} under ${host_tools_dir}")
+                endif()
+            endif()
+
+            set(wrapper_dir "${CMAKE_BINARY_DIR}/kpxc-deployqt")
+            set(target_qt_conf "${wrapper_dir}/target_qt.conf")
+            set(target_qtpaths "${wrapper_dir}/qtpaths.bat")
+            file(MAKE_DIRECTORY "${wrapper_dir}")
+            file(WRITE "${target_qt_conf}"
+                    "[Paths]\nPrefix=${ARG_TARGET_QT_PREFIX}\n")
+            file(TO_NATIVE_PATH "${host_qtpaths}" host_qtpaths_native)
+            file(TO_NATIVE_PATH "${target_qt_conf}" target_qt_conf_native)
+            file(WRITE "${target_qtpaths}"
+                    "@echo off\r\n"
+                    "\"${host_qtpaths_native}\" -qtconf \"${target_qt_conf_native}\" %*\r\n")
         else()
             set(target_tools_dir
                     "${ARG_VCPKG_INSTALLED_DIR}/${ARG_VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
@@ -87,8 +116,8 @@ function(kpxc_resolve_vcpkg_deployqt)
                             "${ARG_VCPKG_TARGET_TRIPLET} under ${target_tools_dir}")
                 endif()
             endif()
-            set(deployqt_arguments --qtpaths "${target_qtpaths}")
         endif()
+        set(deployqt_arguments --qtpaths "${target_qtpaths}")
     elseif(ARG_HOST_SYSTEM_NAME STREQUAL "Darwin")
         set(deployqt_arguments "-libpath=${ARG_TARGET_QT_PREFIX}/lib")
     else()
