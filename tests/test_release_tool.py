@@ -172,6 +172,13 @@ class TestQtManifest(unittest.TestCase):
         command = helper[command_start:helper.index('install(CODE', command_start)]
         self.assertLess(command.index('${APP_BUNDLE_PATH}'), command.index('${DEPLOYQT_ARGS}'))
 
+    def test_qrencode_release_only_library(self):
+        subprocess.run([
+            find_cmake(),
+            '-P',
+            str(ROOT / 'tests' / 'cmake' / 'test_find_qrencode.cmake'),
+        ], check=True, cwd=ROOT)
+
 
 class TestValidationScripts(unittest.TestCase):
     def test_uninstall_requires_install_path_removal(self):
