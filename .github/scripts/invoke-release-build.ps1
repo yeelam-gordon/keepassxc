@@ -31,9 +31,12 @@ function Get-DirectorySummary {
         return [pscustomobject]@{ Count = 0; GiB = 0 }
     }
     $files = Get-ChildItem -LiteralPath $Path -File -Recurse -ErrorAction SilentlyContinue
+    $measurement = $files | Measure-Object -Property Length -Sum
+    $sumProperty = $measurement.PSObject.Properties['Sum']
+    $totalBytes = if ($sumProperty) { $sumProperty.Value } else { 0 }
     return [pscustomobject]@{
         Count = @($files).Count
-        GiB = [Math]::Round(($files | Measure-Object -Property Length -Sum).Sum / 1GB, 2)
+        GiB = [Math]::Round($totalBytes / 1GB, 2)
     }
 }
 
