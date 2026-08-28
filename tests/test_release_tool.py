@@ -215,6 +215,14 @@ class TestValidationScripts(unittest.TestCase):
         self.assertIn('$process.Kill($true)', script)
 
 
+class TestBuildTestSelection(unittest.TestCase):
+    def test_database_test_runs_in_serial_group(self):
+        release_tool = (ROOT / 'release-tool.py').read_text(encoding='utf-8')
+        self.assertIn("serial_tests = 'gui|cli|database'", release_tool)
+        self.assertIn("[ctest_cmd, '-E', serial_tests", release_tool)
+        self.assertIn("[ctest_cmd, '-R', serial_tests", release_tool)
+
+
 class TestWindowsPackagingConfiguration(unittest.TestCase):
     def test_cpack_architectures_fail_closed(self):
         cmake = (ROOT / 'src' / 'CMakeLists.txt').read_text(encoding='utf-8')

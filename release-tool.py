@@ -790,8 +790,10 @@ class Build(Command):
     @staticmethod
     def _run_tests(cwd, ctest_cmd='ctest', parallelism=4):
         logger.info('Running tests...')
-        _run([ctest_cmd, '-E', 'gui|cli', '--output-on-failure', '-j', str(parallelism)], cwd=cwd, capture_output=False)
-        _run([ctest_cmd, '-R', 'gui|cli', '--output-on-failure'], cwd=cwd, capture_output=False)
+        serial_tests = 'gui|cli|database'
+        _run([ctest_cmd, '-E', serial_tests, '--output-on-failure', '-j', str(parallelism)],
+             cwd=cwd, capture_output=False)
+        _run([ctest_cmd, '-R', serial_tests, '--output-on-failure'], cwd=cwd, capture_output=False)
 
     # noinspection PyMethodMayBeStatic
     def build_windows(self, version, src_dir, output_dir, *, parallelism, cmake_opts, platform_target,
