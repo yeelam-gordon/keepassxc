@@ -142,7 +142,15 @@ class TestQtManifest(unittest.TestCase):
     def test_deployqt_host_mapping_is_os_scoped(self):
         cmake = (ROOT / 'CMakeLists.txt').read_text(encoding='utf-8')
         self.assertIn('kpxc_resolve_vcpkg_deployqt(', cmake)
+        self.assertIn('get_filename_component(DEPLOYQT_WORKING_DIR', cmake)
         self.assertNotIn('configure_file("${_deployqt_source}"', cmake)
+
+    def test_windows_deployqt_uses_host_tool_working_directory(self):
+        cmake = (ROOT / 'src' / 'CMakeLists.txt').read_text(encoding='utf-8')
+        self.assertIn('WORKING_DIRECTORY "${DEPLOYQT_WORKING_DIR}")', cmake)
+        self.assertIn('WORKING_DIRECTORY \\"${DEPLOYQT_WORKING_DIR}\\"', cmake)
+        self.assertIn('--dir \\"\\${CMAKE_INSTALL_PREFIX}\\"', cmake)
+        self.assertIn('\\"\\${CMAKE_INSTALL_PREFIX}/${PROGNAME}.exe\\"', cmake)
 
     def test_deployqt_x64_host_arm64_target(self):
         subprocess.run([

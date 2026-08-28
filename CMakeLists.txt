@@ -506,6 +506,7 @@ if(APPLE AND WITH_BUILD_QT)
 endif()
 
 if(_deployqt_exe_name)
+    get_filename_component(DEPLOYQT_WORKING_DIR "${DEPLOYQT_EXE}" DIRECTORY)
     message(STATUS "Using ${_deployqt_exe_name}: ${DEPLOYQT_EXE}")
 endif()
 

@@ -479,7 +479,8 @@ if(WIN32)
             ${DEPLOYQT_ARGS}
             --dir $<TARGET_FILE_DIR:${PROGNAME}>
             $<IF:$<CONFIG:Debug>,--debug,--release>
-            $<TARGET_FILE:${PROGNAME}>)
+            $<TARGET_FILE:${PROGNAME}>
+        WORKING_DIRECTORY "${DEPLOYQT_WORKING_DIR}")
 
     # We have to copy the license file in the configuration phase.
     # CMake checks that CPACK_RESOURCE_FILE_LICENSE actually exists and
@@ -562,8 +563,11 @@ if(WIN32)
             set(_wdqt_mode --release)
         endif()
         execute_process(
-            COMMAND ${DEPLOYQT_EXE} ${DEPLOYQT_ARGS} ${PROGNAME}.exe \${_wdqt_mode}
-            WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
+            COMMAND ${DEPLOYQT_EXE} ${DEPLOYQT_ARGS}
+                    --dir \"\${CMAKE_INSTALL_PREFIX}\"
+                    \"\${CMAKE_INSTALL_PREFIX}/${PROGNAME}.exe\"
+                    \${_wdqt_mode}
+            WORKING_DIRECTORY \"${DEPLOYQT_WORKING_DIR}\"
             OUTPUT_QUIET
             RESULT_VARIABLE _wdqt_result
         )
