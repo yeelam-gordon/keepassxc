@@ -223,6 +223,11 @@ class TestBuildTestSelection(unittest.TestCase):
         self.assertIn("[ctest_cmd, '-R', serial_tests", release_tool)
         self.assertIn("'--timeout', '120', '-V'", release_tool)
 
+    def test_vcpkg_qt_plugins_are_available_to_windows_tests(self):
+        tests_cmake = (ROOT / 'tests' / 'CMakeLists.txt').read_text(encoding='utf-8')
+        self.assertIn('if(WIN32 AND WITH_BUILD_QT)', tests_cmake)
+        self.assertIn('"QT_PLUGIN_PATH=${Qt6_PREFIX}/Qt6/plugins"', tests_cmake)
+
 
 class TestWindowsPackagingConfiguration(unittest.TestCase):
     def test_cpack_architectures_fail_closed(self):
