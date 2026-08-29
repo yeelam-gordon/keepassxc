@@ -7,7 +7,9 @@ param(
     [ValidateSet('x64', 'arm64')]
     [string] $Architecture,
 
-    [string] $UpgradeFromMsi
+    [string] $UpgradeFromMsi,
+
+    [switch] $Headless
 )
 
 $ErrorActionPreference = 'Stop'
@@ -138,9 +140,18 @@ function Invoke-MsiExec {
 }
 
 function Assert-VersionCommands {
-    param([Parameter(Mandatory)][string] $Root)
+    param(
+        [Parameter(Mandatory)][string] $Root,
+        [switch] $Headless
+    )
 
-    foreach ($name in 'keepassxc-cli.exe', 'KeePassXC.exe') {
+    $executables = @('keepassxc-cli.exe')
+    if (-not $Headless) {
+        $executables += 'KeePassXC.exe'
+    } else {
+        Write-Host 'Skipping KeePassXC.exe launch on the non-interactive hosted runner.'
+    }
+    foreach ($name in $executables) {
         $executable = Get-ChildItem -LiteralPath $Root -Recurse -File -Filter $name |
             Select-Object -First 1
         if (-not $executable) {
@@ -183,7 +194,7 @@ New-Item -ItemType Directory -Path $archiveRoot -Force | Out-Null
 try {
     Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath $archiveRoot
     Assert-PeFiles -Root $archiveRoot -Machine $expectedMachine -Architecture $Architecture
-    Assert-VersionCommands -Root $archiveRoot
+    Assert-VersionCommands -Root $archiveRoot -Headless:$Headless
 
     if ($UpgradeFromMsi) {
         $previousMsiPath = (Resolve-Path -LiteralPath $UpgradeFromMsi).Path
@@ -197,7 +208,7 @@ try {
         if (-not (Test-ProductRegistration -ProductCode $previousMetadata.ProductCode)) {
             throw "Previous MSI product $($previousMetadata.ProductCode) was not registered."
         }
-        Assert-VersionCommands -Root $installRoot
+        Assert-VersionCommands -Root $installRoot -Headless:$Headless
     }
 
     Invoke-MsiExec -Arguments @(
@@ -218,7 +229,7 @@ try {
     }
 
     Assert-PeFiles -Root $installRoot -Machine $expectedMachine -Architecture $Architecture
-    Assert-VersionCommands -Root $installRoot
+    Assert-VersionCommands -Root $installRoot -Headless:$Headless
 
     Invoke-MsiExec -Arguments @(
         '/x', $metadata.ProductCode, '/qn', '/norestart',

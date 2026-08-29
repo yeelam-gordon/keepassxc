@@ -148,6 +148,7 @@ jobs:
           .github/scripts/verify-windows-package.ps1
           -ArtifactDirectory release-x64
           -Architecture x64
+          -Headless
 
       - uses: actions/upload-artifact@v4
         with:
@@ -271,6 +272,7 @@ jobs:
           .github/scripts/verify-windows-package.ps1
           -ArtifactDirectory release-arm64
           -Architecture arm64
+          -Headless
 
       - uses: actions/upload-artifact@v4
         with:

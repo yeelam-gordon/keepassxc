@@ -236,6 +236,15 @@ class TestValidationScripts(unittest.TestCase):
         self.assertIn('Invoke-CheckedProcess -FilePath $executable.FullName', script)
         self.assertIn('Invoke-CheckedProcess -FilePath "$env:SystemRoot\\System32\\msiexec.exe"', script)
 
+    def test_hosted_package_checks_are_explicitly_headless(self):
+        script = (ROOT / '.github' / 'scripts' / 'verify-windows-package.ps1').read_text(
+            encoding='utf-8')
+        self.assertIn('[switch] $Headless', script)
+        self.assertIn("Skipping KeePassXC.exe launch on the non-interactive hosted runner.", script)
+        workflow = (ROOT / '.github' / 'workflows' / 'windows-arm.yml').read_text(
+            encoding='utf-8')
+        self.assertEqual(2, workflow.count('-Headless'))
+
     def test_build_records_and_enforces_minimum_free_space(self):
         script = (ROOT / '.github' / 'scripts' / 'invoke-release-build.ps1').read_text(
             encoding='utf-8')
