@@ -318,4 +318,5 @@ jobs:
           .github/scripts/verify-windows-package.ps1 `
             -ArtifactDirectory upgrade/arm64 `
             -Architecture arm64 `
-            -UpgradeFromMsi $x64Msi.FullName
+            -UpgradeFromMsi $x64Msi.FullName `
+            -Headless

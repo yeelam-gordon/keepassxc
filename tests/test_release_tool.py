@@ -243,7 +243,7 @@ class TestValidationScripts(unittest.TestCase):
         self.assertIn("Skipping KeePassXC.exe launch on the non-interactive hosted runner.", script)
         workflow = (ROOT / '.github' / 'workflows' / 'windows-arm.yml').read_text(
             encoding='utf-8')
-        self.assertEqual(2, workflow.count('-Headless'))
+        self.assertEqual(3, workflow.count('-Headless'))
 
     def test_wix_binary_archive_is_pinned_for_both_windows_jobs(self):
         workflow = (ROOT / '.github' / 'workflows' / 'windows-arm.yml').read_text(
