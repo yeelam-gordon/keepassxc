@@ -804,8 +804,10 @@ class Build(Command):
         if sign:
             cmake_opts.append(f'-DWITH_XC_CODESIGN_IDENTITY={sign_identity}')
             cmake_opts.append(f'-DWITH_XC_CODESIGN_TIMESTAMP_URL={sign_timestamp_url}')
-        # Use vcpkg for dependency deployment
-        cmake_opts.append('-DX_VCPKG_APPLOCAL_DEPS_INSTALL=ON')
+        # windeployqt must run before app-local copying when Qt comes from
+        # vcpkg, otherwise it can lock DLLs that it subsequently replaces.
+        app_local_install = 'OFF' if build_qt else 'ON'
+        cmake_opts.append(f'-DX_VCPKG_APPLOCAL_DEPS_INSTALL={app_local_install}')
 
         if not mingw and not use_system_deps:
             _add_windows_vcpkg_triplets(cmake_opts, platform_target, build_qt)

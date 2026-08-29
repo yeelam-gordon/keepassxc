@@ -585,6 +585,22 @@ if(WIN32)
         )
         if(NOT \${_wdqt_result} EQUAL 0)
             message(FATAL_ERROR \"windeployqt failed with exit code \${_wdqt_result}\")
+        endif()
+
+        if(${WITH_BUILD_QT})
+            file(GLOB _installed_executables \"\${CMAKE_INSTALL_PREFIX}/*.exe\")
+            foreach(_installed_executable IN LISTS _installed_executables)
+                execute_process(
+                    COMMAND \"${Z_VCPKG_EXECUTABLE}\" z-applocal
+                            \"--target-binary=\${_installed_executable}\"
+                            \"--installed-bin-dir=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin\"
+                    RESULT_VARIABLE _applocal_result
+                )
+                if(NOT \${_applocal_result} EQUAL 0)
+                    message(FATAL_ERROR
+                            \"vcpkg app-local failed for \${_installed_executable} with exit code \${_applocal_result}\")
+                endif()
+            endforeach()
         endif()"
         COMPONENT Runtime)
 

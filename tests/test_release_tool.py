@@ -160,6 +160,14 @@ class TestQtManifest(unittest.TestCase):
         self.assertLess(disable, executable)
         self.assertLess(executable, restore)
 
+    def test_vcpkg_qt_install_deployment_is_ordered(self):
+        release_tool = (ROOT / 'release-tool.py').read_text(encoding='utf-8')
+        self.assertIn("app_local_install = 'OFF' if build_qt else 'ON'", release_tool)
+        cmake = (ROOT / 'src' / 'CMakeLists.txt').read_text(encoding='utf-8')
+        deployqt = cmake.index('COMMAND ${DEPLOYQT_EXE} ${DEPLOYQT_ARGS}')
+        applocal = cmake.index('\\"${Z_VCPKG_EXECUTABLE}\\" z-applocal')
+        self.assertLess(deployqt, applocal)
+
     def test_deployqt_x64_host_arm64_target(self):
         subprocess.run([
             find_cmake(),
