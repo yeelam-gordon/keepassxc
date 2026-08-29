@@ -165,8 +165,11 @@ class TestQtManifest(unittest.TestCase):
         self.assertIn("app_local_install = 'OFF' if build_qt else 'ON'", release_tool)
         cmake = (ROOT / 'src' / 'CMakeLists.txt').read_text(encoding='utf-8')
         deployqt = cmake.index('COMMAND ${DEPLOYQT_EXE} ${DEPLOYQT_ARGS}')
+        condition = cmake.index('if(WITH_BUILD_QT)', deployqt)
         applocal = cmake.index('\\"${Z_VCPKG_EXECUTABLE}\\" z-applocal')
         self.assertLess(deployqt, applocal)
+        self.assertLess(condition, applocal)
+        self.assertNotIn('if(${WITH_BUILD_QT})', cmake)
 
     def test_deployqt_x64_host_arm64_target(self):
         subprocess.run([

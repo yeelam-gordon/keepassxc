@@ -585,9 +585,11 @@ if(WIN32)
         )
         if(NOT \${_wdqt_result} EQUAL 0)
             message(FATAL_ERROR \"windeployqt failed with exit code \${_wdqt_result}\")
-        endif()
+        endif()"
+        COMPONENT Runtime)
 
-        if(${WITH_BUILD_QT})
+    if(WITH_BUILD_QT)
+        install(CODE "
             file(GLOB _installed_executables \"\${CMAKE_INSTALL_PREFIX}/*.exe\")
             foreach(_installed_executable IN LISTS _installed_executables)
                 execute_process(
@@ -600,9 +602,9 @@ if(WIN32)
                     message(FATAL_ERROR
                             \"vcpkg app-local failed for \${_installed_executable} with exit code \${_applocal_result}\")
                 endif()
-            endforeach()
-        endif()"
-        COMPONENT Runtime)
+            endforeach()"
+            COMPONENT Runtime)
+    endif()
 
     if(NOT VCPKG_INSTALLED_DIR)
         install(CODE "set(gp_tool \"objdump\")" COMPONENT Runtime)
