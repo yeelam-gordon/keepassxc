@@ -259,6 +259,11 @@ class TestBuildTestSelection(unittest.TestCase):
         self.assertIn('if(WIN32 AND WITH_BUILD_QT)', tests_cmake)
         self.assertIn('"QT_PLUGIN_PATH=${Qt6_PREFIX}/Qt6/plugins"', tests_cmake)
 
+    def test_database_test_emits_function_level_diagnostics(self):
+        tests_cmake = (ROOT / 'tests' / 'CMakeLists.txt').read_text(encoding='utf-8')
+        self.assertIn('if(TEST_NAME STREQUAL "testdatabase")', tests_cmake)
+        self.assertIn('list(APPEND test_arguments -v1)', tests_cmake)
+
     def test_windows_artifacts_support_cross_volume_output(self):
         release_tool = (ROOT / 'release-tool.py').read_text(encoding='utf-8')
         self.assertIn('shutil.move(artifact, output_dir / artifact.name)', release_tool)
