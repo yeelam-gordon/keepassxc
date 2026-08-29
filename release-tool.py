@@ -846,7 +846,7 @@ class Build(Command):
 
             artifacts = list(Path(build_dir).glob("*.zip")) + list(Path(build_dir).glob("*.msi"))
             for artifact in artifacts:
-                artifact.replace(output_dir / artifact.name)
+                shutil.move(artifact, output_dir / artifact.name)
                 logger.info(f'Created artifact: {output_dir / artifact.name}')
 
     # noinspection PyMethodMayBeStatic

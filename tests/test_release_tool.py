@@ -236,6 +236,11 @@ class TestBuildTestSelection(unittest.TestCase):
         self.assertIn('if(WIN32 AND WITH_BUILD_QT)', tests_cmake)
         self.assertIn('"QT_PLUGIN_PATH=${Qt6_PREFIX}/Qt6/plugins"', tests_cmake)
 
+    def test_windows_artifacts_support_cross_volume_output(self):
+        release_tool = (ROOT / 'release-tool.py').read_text(encoding='utf-8')
+        self.assertIn('shutil.move(artifact, output_dir / artifact.name)', release_tool)
+        self.assertNotIn('artifact.replace(output_dir / artifact.name)', release_tool)
+
 
 class TestWindowsPackagingConfiguration(unittest.TestCase):
     def test_cpack_architectures_fail_closed(self):
