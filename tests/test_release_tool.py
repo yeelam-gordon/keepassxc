@@ -221,6 +221,7 @@ class TestBuildTestSelection(unittest.TestCase):
         self.assertIn("serial_tests = 'gui|cli|database'", release_tool)
         self.assertIn("[ctest_cmd, '-E', serial_tests", release_tool)
         self.assertIn("[ctest_cmd, '-R', serial_tests", release_tool)
+        self.assertIn("'--timeout', '120', '-V'", release_tool)
 
 
 class TestWindowsPackagingConfiguration(unittest.TestCase):
