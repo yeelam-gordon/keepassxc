@@ -214,6 +214,11 @@ class TestValidationScripts(unittest.TestCase):
             '    }',
             script)
 
+    def test_msi_metadata_query_does_not_leak_com_output(self):
+        script = (ROOT / '.github' / 'scripts' / 'verify-windows-package.ps1').read_text(
+            encoding='utf-8')
+        self.assertIn('[void] $view.Execute()', script)
+
     def test_build_records_and_enforces_minimum_free_space(self):
         script = (ROOT / '.github' / 'scripts' / 'invoke-release-build.ps1').read_text(
             encoding='utf-8')

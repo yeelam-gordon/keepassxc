@@ -73,7 +73,7 @@ function Get-MsiMetadata {
     $database = $installer.OpenDatabase($Path, 0)
     $summary = $database.SummaryInformation(0)
     $view = $database.OpenView("SELECT ``Value`` FROM ``Property`` WHERE ``Property``='ProductCode'")
-    $view.Execute()
+    [void] $view.Execute()
     $record = $view.Fetch()
     if (-not $record) {
         throw "MSI does not define a ProductCode: $Path"
