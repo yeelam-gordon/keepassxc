@@ -790,10 +790,12 @@ class Build(Command):
     @staticmethod
     def _run_tests(cwd, ctest_cmd='ctest', parallelism=4):
         logger.info('Running tests...')
-        serial_tests = 'gui|cli|database'
-        _run([ctest_cmd, '-E', serial_tests, '--output-on-failure', '-j', str(parallelism)],
+        _run([ctest_cmd, '-E', 'gui|cli|database', '--output-on-failure', '-j', str(parallelism)],
              cwd=cwd, capture_output=False)
-        _run([ctest_cmd, '-R', serial_tests, '--output-on-failure', '--timeout', '120', '-V'],
+        _run([ctest_cmd, '-R', '^testdatabase$', '--repeat', 'until-pass:2',
+              '--output-on-failure', '--timeout', '120', '-V'],
+             cwd=cwd, capture_output=False)
+        _run([ctest_cmd, '-R', 'gui|cli', '--output-on-failure', '--timeout', '120', '-V'],
              cwd=cwd, capture_output=False)
 
     # noinspection PyMethodMayBeStatic

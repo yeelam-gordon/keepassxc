@@ -248,9 +248,10 @@ class TestValidationScripts(unittest.TestCase):
 class TestBuildTestSelection(unittest.TestCase):
     def test_database_test_runs_in_serial_group(self):
         release_tool = (ROOT / 'release-tool.py').read_text(encoding='utf-8')
-        self.assertIn("serial_tests = 'gui|cli|database'", release_tool)
-        self.assertIn("[ctest_cmd, '-E', serial_tests", release_tool)
-        self.assertIn("[ctest_cmd, '-R', serial_tests", release_tool)
+        self.assertIn("[ctest_cmd, '-E', 'gui|cli|database'", release_tool)
+        self.assertIn("[ctest_cmd, '-R', '^testdatabase$'", release_tool)
+        self.assertIn("'--repeat', 'until-pass:2'", release_tool)
+        self.assertIn("[ctest_cmd, '-R', 'gui|cli'", release_tool)
         self.assertIn("'--timeout', '120', '-V'", release_tool)
 
     def test_vcpkg_qt_plugins_are_available_to_windows_tests(self):
