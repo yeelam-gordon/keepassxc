@@ -228,6 +228,14 @@ class TestValidationScripts(unittest.TestCase):
         self.assertIn('$expectedRedist = "vc_redist.$Architecture.exe"', script)
         self.assertIn('$file.Name -ieq $expectedRedist -and $actual -eq 0x014C', script)
 
+    def test_package_processes_have_explicit_timeouts(self):
+        script = (ROOT / '.github' / 'scripts' / 'verify-windows-package.ps1').read_text(
+            encoding='utf-8')
+        self.assertIn('function Invoke-CheckedProcess', script)
+        self.assertIn('$process.WaitForExit($TimeoutSeconds * 1000)', script)
+        self.assertIn('Invoke-CheckedProcess -FilePath $executable.FullName', script)
+        self.assertIn('Invoke-CheckedProcess -FilePath "$env:SystemRoot\\System32\\msiexec.exe"', script)
+
     def test_build_records_and_enforces_minimum_free_space(self):
         script = (ROOT / '.github' / 'scripts' / 'invoke-release-build.ps1').read_text(
             encoding='utf-8')

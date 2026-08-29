@@ -98,13 +98,43 @@ function Test-ProductRegistration {
         (Test-Path "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductCode")
 }
 
+function Invoke-CheckedProcess {
+    param(
+        [Parameter(Mandatory)][string] $FilePath,
+        [Parameter(Mandatory)][string[]] $Arguments,
+        [int] $TimeoutSeconds = 120
+    )
+
+    Write-Host "Running: $FilePath $($Arguments -join ' ')"
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $FilePath
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    foreach ($argument in $Arguments) {
+        [void] $startInfo.ArgumentList.Add($argument)
+    }
+
+    $process = [Diagnostics.Process]::Start($startInfo)
+    if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+        $process.Kill($true)
+        $process.WaitForExit()
+        throw "$FilePath timed out after $TimeoutSeconds seconds."
+    }
+
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    if ($stdout) { Write-Host $stdout.TrimEnd() }
+    if ($stderr) { Write-Host $stderr.TrimEnd() }
+    if ($process.ExitCode -ne 0) {
+        throw "$FilePath failed with exit code $($process.ExitCode)."
+    }
+}
+
 function Invoke-MsiExec {
     param([Parameter(Mandatory)][string[]] $Arguments)
 
-    & "$env:SystemRoot\System32\msiexec.exe" @Arguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "msiexec $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
-    }
+    Invoke-CheckedProcess -FilePath "$env:SystemRoot\System32\msiexec.exe" -Arguments $Arguments
 }
 
 function Assert-VersionCommands {
@@ -116,10 +146,7 @@ function Assert-VersionCommands {
         if (-not $executable) {
             throw "$name was not found under $Root."
         }
-        & $executable.FullName --version
-        if ($LASTEXITCODE -ne 0) {
-            throw "$($executable.FullName) --version failed with exit code $LASTEXITCODE."
-        }
+        Invoke-CheckedProcess -FilePath $executable.FullName -Arguments @('--version') -TimeoutSeconds 30
     }
 }
 
