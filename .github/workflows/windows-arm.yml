@@ -77,18 +77,22 @@ jobs:
       - name: Provision pinned WiX 3.14.1
         shell: pwsh
         run: |
-          choco install wixtoolset --version=3.14.1 --allow-downgrade --yes --no-progress --limit-output
-          if ($LASTEXITCODE -ne 0) { throw "Chocolatey exited with $LASTEXITCODE" }
-          $wix = Join-Path ${env:ProgramFiles(x86)} 'WiX Toolset v3.14\bin'
-          if (-not (Test-Path -LiteralPath $wix -PathType Container)) {
-            throw "Expected WiX bin directory at $wix."
+          $archive = Join-Path $env:RUNNER_TEMP 'wix314-binaries.zip'
+          $wix = Join-Path $env:RUNNER_TEMP 'wix314-binaries'
+          Invoke-WebRequest -UseBasicParsing `
+            'https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip' `
+            -OutFile $archive
+          $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+          $expectedHash = '6AC824E1642D6F7277D0ED7EA09411A508F6116BA6FAE0AA5F2C7DAA2FF43D31'
+          if ($actualHash -ne $expectedHash) {
+            throw "WiX archive hash mismatch: expected $expectedHash, found $actualHash."
           }
-          [xml] $nuspec = Get-Content -LiteralPath (Join-Path $env:ChocolateyInstall 'lib\wixtoolset\wixtoolset.nuspec')
-          if ([string] $nuspec.package.metadata.version -ne '3.14.1') {
-            throw "Expected WiX package 3.14.1, found $($nuspec.package.metadata.version)."
-          }
+          Expand-Archive -LiteralPath $archive -DestinationPath $wix
           foreach ($tool in 'candle.exe', 'light.exe', 'heat.exe') {
             $path = Join-Path $wix $tool
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Expected WiX tool at $path."
+            }
             $stream = [IO.File]::OpenRead($path)
             $reader = [IO.BinaryReader]::new($stream)
             try {
@@ -193,18 +197,22 @@ jobs:
       - name: Provision pinned WiX 3.14.1
         shell: pwsh
         run: |
-          choco install wixtoolset --version=3.14.1 --allow-downgrade --yes --no-progress --limit-output
-          if ($LASTEXITCODE -ne 0) { throw "Chocolatey exited with $LASTEXITCODE" }
-          $wix = Join-Path ${env:ProgramFiles(x86)} 'WiX Toolset v3.14\bin'
-          if (-not (Test-Path -LiteralPath $wix -PathType Container)) {
-            throw "Expected WiX bin directory at $wix."
+          $archive = Join-Path $env:RUNNER_TEMP 'wix314-binaries.zip'
+          $wix = Join-Path $env:RUNNER_TEMP 'wix314-binaries'
+          Invoke-WebRequest -UseBasicParsing `
+            'https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip' `
+            -OutFile $archive
+          $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+          $expectedHash = '6AC824E1642D6F7277D0ED7EA09411A508F6116BA6FAE0AA5F2C7DAA2FF43D31'
+          if ($actualHash -ne $expectedHash) {
+            throw "WiX archive hash mismatch: expected $expectedHash, found $actualHash."
           }
-          [xml] $nuspec = Get-Content -LiteralPath (Join-Path $env:ChocolateyInstall 'lib\wixtoolset\wixtoolset.nuspec')
-          if ([string] $nuspec.package.metadata.version -ne '3.14.1') {
-            throw "Expected WiX package 3.14.1, found $($nuspec.package.metadata.version)."
-          }
+          Expand-Archive -LiteralPath $archive -DestinationPath $wix
           foreach ($tool in 'candle.exe', 'light.exe', 'heat.exe') {
             $path = Join-Path $wix $tool
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Expected WiX tool at $path."
+            }
             $stream = [IO.File]::OpenRead($path)
             $reader = [IO.BinaryReader]::new($stream)
             try {

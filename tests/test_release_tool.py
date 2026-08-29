@@ -245,6 +245,17 @@ class TestValidationScripts(unittest.TestCase):
             encoding='utf-8')
         self.assertEqual(2, workflow.count('-Headless'))
 
+    def test_wix_binary_archive_is_pinned_for_both_windows_jobs(self):
+        workflow = (ROOT / '.github' / 'workflows' / 'windows-arm.yml').read_text(
+            encoding='utf-8')
+        self.assertEqual(2, workflow.count(
+            'https://github.com/wixtoolset/wix3/releases/download/'
+            'wix3141rtm/wix314-binaries.zip'))
+        self.assertEqual(
+            2,
+            workflow.count('6AC824E1642D6F7277D0ED7EA09411A508F6116BA6FAE0AA5F2C7DAA2FF43D31'))
+        self.assertNotIn('choco install wixtoolset', workflow)
+
     def test_build_records_and_enforces_minimum_free_space(self):
         script = (ROOT / '.github' / 'scripts' / 'invoke-release-build.ps1').read_text(
             encoding='utf-8')
