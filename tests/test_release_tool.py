@@ -219,6 +219,12 @@ class TestValidationScripts(unittest.TestCase):
             encoding='utf-8')
         self.assertIn('[void] $view.Execute()', script)
 
+    def test_only_matching_vc_redist_allows_x86_bootstrapper(self):
+        script = (ROOT / '.github' / 'scripts' / 'verify-windows-package.ps1').read_text(
+            encoding='utf-8')
+        self.assertIn('$expectedRedist = "vc_redist.$Architecture.exe"', script)
+        self.assertIn('$file.Name -ieq $expectedRedist -and $actual -eq 0x014C', script)
+
     def test_build_records_and_enforces_minimum_free_space(self):
         script = (ROOT / '.github' / 'scripts' / 'invoke-release-build.ps1').read_text(
             encoding='utf-8')

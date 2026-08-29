@@ -48,7 +48,8 @@ function Get-PeMachine {
 function Assert-PeFiles {
     param(
         [Parameter(Mandatory)][string] $Root,
-        [Parameter(Mandatory)][int] $Machine
+        [Parameter(Mandatory)][int] $Machine,
+        [Parameter(Mandatory)][string] $Architecture
     )
 
     $files = @(Get-ChildItem -LiteralPath $Root -Recurse -File |
@@ -59,6 +60,11 @@ function Assert-PeFiles {
     foreach ($file in $files) {
         $actual = Get-PeMachine -Path $file.FullName
         if ($actual -ne $Machine) {
+            $expectedRedist = "vc_redist.$Architecture.exe"
+            if ($file.Name -ieq $expectedRedist -and $actual -eq 0x014C) {
+                Write-Host "Accepted x86 vendor bootstrapper: $($file.FullName)"
+                continue
+            }
             throw ("Unexpected PE machine for {0}: expected 0x{1:X4}, found 0x{2:X4}." -f
                 $file.FullName, $Machine, $actual)
         }
@@ -149,7 +155,7 @@ New-Item -ItemType Directory -Path $archiveRoot -Force | Out-Null
 
 try {
     Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath $archiveRoot
-    Assert-PeFiles -Root $archiveRoot -Machine $expectedMachine
+    Assert-PeFiles -Root $archiveRoot -Machine $expectedMachine -Architecture $Architecture
     Assert-VersionCommands -Root $archiveRoot
 
     if ($UpgradeFromMsi) {
@@ -184,7 +190,7 @@ try {
         throw "Previous MSI product remained registered after the architecture upgrade."
     }
 
-    Assert-PeFiles -Root $installRoot -Machine $expectedMachine
+    Assert-PeFiles -Root $installRoot -Machine $expectedMachine -Architecture $Architecture
     Assert-VersionCommands -Root $installRoot
 
     Invoke-MsiExec -Arguments @(
