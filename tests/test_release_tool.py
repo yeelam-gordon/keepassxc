@@ -276,7 +276,7 @@ class TestBuildTestSelection(unittest.TestCase):
 
     def test_vcpkg_qt_plugins_are_available_to_windows_tests(self):
         tests_cmake = (ROOT / 'tests' / 'CMakeLists.txt').read_text(encoding='utf-8')
-        self.assertIn('if(WIN32 AND WITH_BUILD_QT)', tests_cmake)
+        self.assertIn('if(WIN32 AND WITH_BUILD_QT AND TEST_NAME MATCHES "cli|gui")', tests_cmake)
         self.assertIn('"QT_PLUGIN_PATH=${Qt6_PREFIX}/Qt6/plugins"', tests_cmake)
 
     def test_database_test_emits_function_level_diagnostics(self):
