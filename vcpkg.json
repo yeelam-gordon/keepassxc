@@ -32,15 +32,25 @@
         "qtbase",
         {
           "name": "qtbase",
-          "platform": "linux | freebsd",
-          "features": ["wayland"]
+          "platform": "windows",
+          "features": [
+            "windeployqt"
+          ]
         },
-        "qtdeclarative",
+        {
+          "name": "qtbase",
+          "platform": "linux | freebsd",
+          "features": [
+            "wayland"
+          ]
+        },
         "qtimageformats",
         "qtsvg",
         {
           "name": "qttools",
-          "features": ["linguist", "qml"]
+          "features": [
+            "linguist"
+          ]
         },
         "qttranslations"
       ]
