@@ -208,6 +208,69 @@ class TestQtManifest(unittest.TestCase):
 
 
 class TestValidationScripts(unittest.TestCase):
+    def test_empty_cache_directory_reports_zero_and_allows_build_launch(self):
+        if os.name != 'nt':
+            self.skipTest('PowerShell wrapper regression runs only on Windows.')
+
+        powershell = shutil.which('pwsh') or shutil.which('powershell')
+        if not powershell:
+            self.skipTest('PowerShell is required for wrapper regression coverage.')
+
+        vswhere = Path(os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)')) \
+            / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+        if not vswhere.is_file():
+            self.skipTest('vswhere is required for wrapper regression coverage.')
+
+        sandbox = ROOT / 'build' / 'test-invoke-release-build-empty-cache'
+        shutil.rmtree(sandbox, ignore_errors=True)
+        source_dir = sandbox / 'source'
+        cache_dir = sandbox / 'cache'
+        bin_dir = sandbox / 'bin'
+        source_dir.mkdir(parents=True)
+        cache_dir.mkdir()
+        bin_dir.mkdir()
+        (source_dir / 'release-tool.py').write_text(
+            "import sys\n"
+            "print('stub release tool invoked')\n"
+            "sys.exit(0)\n",
+            encoding='utf-8')
+        (bin_dir / 'cmake.cmd').write_text(
+            "@echo off\r\n"
+            "echo cmake version 3.30.1\r\n",
+            encoding='ascii')
+        (bin_dir / 'cpack.cmd').write_text(
+            "@echo off\r\n"
+            "echo cpack version 3.30.1\r\n",
+            encoding='ascii')
+
+        env = os.environ.copy()
+        env['PATH'] = str(bin_dir) + os.pathsep + env.get('PATH', '')
+        env['VCPKG_DEFAULT_BINARY_CACHE'] = str(cache_dir)
+
+        try:
+            result = subprocess.run([
+                powershell,
+                '-NoProfile',
+                '-ExecutionPolicy', 'Bypass',
+                '-File', str(ROOT / '.github' / 'scripts' / 'invoke-release-build.ps1'),
+                '-PlatformTarget', 'arm64',
+                '-SourceDirectory', str(source_dir.relative_to(ROOT)),
+                '-OutputDirectory', str((sandbox / 'output').relative_to(ROOT)),
+                '-Parallelism', '1',
+                '-TimeoutMinutes', '1',
+                '-MinimumInitialFreeGiB', '0',
+                '-MinimumFinalFreeGiB', '0',
+                '-DiskPollSeconds', '1',
+            ], cwd=ROOT, env=env, capture_output=True, text=True, check=False)
+            output = result.stdout + result.stderr
+            self.assertEqual(0, result.returncode, output)
+            self.assertIn('vcpkg.cache_before.count=0', output)
+            self.assertIn('vcpkg.cache_before.gib=0', output)
+            self.assertIn('build.command=', output)
+            self.assertIn('Release build completed successfully.', output)
+        finally:
+            shutil.rmtree(sandbox, ignore_errors=True)
+
     def test_uninstall_requires_install_path_removal(self):
         script = (ROOT / '.github' / 'scripts' / 'verify-windows-package.ps1').read_text(
             encoding='utf-8')
